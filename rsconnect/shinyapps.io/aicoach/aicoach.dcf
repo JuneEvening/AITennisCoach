@@ -4,7 +4,7 @@ username: aicoach
 account: aicoach
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
-appId: 15264783
-bundleId: 10817661
+appId: ********
+bundleId: ********
 url: https://aicoach.shinyapps.io/aicoach/
 version: 1
