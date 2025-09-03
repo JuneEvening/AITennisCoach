@@ -9,7 +9,7 @@ Step 4. The app calculates differences in relative joint angles between the pro 
 Step 5. These differences are sent to OpenAI to generate personalised coaching advice.
 Step 6. The coaching advice and any queries typed in, are shown in the web app.
 
-# Setup:
+# Setup
 1. Isntall R, RStudio, and Python enviroment.
 2. Get an OpenAI API key from platform.openai.com/api-keys.
 3. Install Python packages: Open terminal and run:
@@ -28,7 +28,3 @@ Step 2. Upload a pro video (e.g., from YouTube), click "Extract Frames", then "A
 Step 3. Do the same with a student video.
 Step 4. Click "Compare Poses" to see the analysis.
 Step 5. Click "Get Tennis Coach Advice" for AI feedback.
-
-
-
-
