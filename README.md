@@ -19,10 +19,10 @@ Step 6. The coaching advice and any queries typed in, are shown in the web app.
 5. Set your API key: In R, run:
    Sys.setenv(OPENAI_API_KEY = 'your-key-here')
 
-# How to Run:
+# How to Run
 Open app.R in RStudio and click "Run App".
 
-# How to Use:
+# How to Use
 Step 1. Open the app in your browser.
 Step 2. Upload a pro video (e.g., from YouTube), click "Extract Frames", then "Annotate Frames". Pick a good frame.
 Step 3. Do the same with a student video.
