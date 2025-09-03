@@ -28,3 +28,5 @@ Open app.R in RStudio and click "Run App".
 3. Do the same with a student video.
 4. Click "Compare Poses" to see the analysis.
 5. Click "Get Tennis Coach Advice" for AI feedback.
+
+# App Demo
