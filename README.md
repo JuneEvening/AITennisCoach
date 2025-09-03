@@ -10,7 +10,6 @@ Step 5. These differences are sent to OpenAI to generate personalised coaching a
 Step 6. The coaching advice and any queries typed in, are shown in the web app.
 
 # Setup:
-
 1. Isntall R, RStudio, and Python enviroment.
 2. Get an OpenAI API key from platform.openai.com/api-keys.
 3. Install Python packages: Open terminal and run:
