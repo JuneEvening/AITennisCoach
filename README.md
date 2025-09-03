@@ -2,12 +2,12 @@
 An EPQ web app that uses computer vision and AI to analyse tennis strokes by comparing a student's pose to a professional.
 
 # Working Steps 
-Step 1. Users upload videos of a pro and a student player.
-Step 2. The app extracts frames from the videos.
-Step 3. MediaPipe analyses each frame to annotate body landmarks of 33 joints.
-Step 4. The app calculates differences in relative joint angles between the pro and student.
-Step 5. These differences are sent to OpenAI to generate personalised coaching advice.
-Step 6. The coaching advice and any queries typed in, are shown in the web app.
+1. Users upload videos of a pro and a student player.
+2. 2. The app extracts frames from the videos.
+3. MediaPipe analyses each frame to annotate body landmarks of 33 joints.
+4. The app calculates differences in relative joint angles between the pro and student.
+5. These differences are sent to OpenAI to generate personalised coaching advice.
+6. The coaching advice and any queries typed in, are shown in the web app.
 
 # Setup
 1. Isntall R, RStudio, and Python enviroment.
@@ -23,8 +23,8 @@ Step 6. The coaching advice and any queries typed in, are shown in the web app.
 Open app.R in RStudio and click "Run App".
 
 # How to Use
-Step 1. Open the app in your browser.
-Step 2. Upload a pro video (e.g., from YouTube), click "Extract Frames", then "Annotate Frames". Pick a good frame.
-Step 3. Do the same with a student video.
-Step 4. Click "Compare Poses" to see the analysis.
-Step 5. Click "Get Tennis Coach Advice" for AI feedback.
+1. Open the app in your browser.
+2. Upload a pro video (e.g., from YouTube), click "Extract Frames", then "Annotate Frames". Pick a good frame.
+3. Do the same with a student video.
+4. Click "Compare Poses" to see the analysis.
+5. Click "Get Tennis Coach Advice" for AI feedback.
