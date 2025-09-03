@@ -1,0 +1,893 @@
+---
+title: "AI Coach.Rmd"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## R Markdown
+
+```{r mocapr}
+
+#install.packages("devtools")
+#devtools::install_github("steenharsted/mocapr")
+#library(mocapr)
+
+```
+
+```{r step1_download_videos}
+
+## shell script to download youtube videos in .mp4 format
+## yt-dlp -f mp4 "https://www.youtube.com/shorts/QhT0_0BsX0k?feature=share"
+
+```
+
+```{r step2_extract_video_to_frames}
+
+#Install necessary packages
+#install.packages("opencv")
+#install.packages("magick")
+#install.packages("av")
+
+library(opencv)
+library(magick)
+library(av)
+library(gganimate)
+library(transformr)
+
+# generate random video
+# av::av_demo()
+
+# Create the gganimate plot
+# p <- ggplot(airquality, aes(Day, Temp)) + 
+# geom_line(size = 2, colour = 'steelblue') + 
+# transition_states(Month, 4, 1) + 
+# shadow_mark(size = 1, colour = 'grey')
+
+# Render and show the video
+# q <- 2
+# df <- animate(p, renderer = av_renderer('/Users/misc/epq/RogerFedererForehandSlowMotionCourtLevelView.mp4'), width = 720*q, height = 480*q, res = 72*q, fps = 25)
+
+# play input videos
+# utils::browseURL('/Users/misc/epq/RogerFedererForehandSlowMotionCourtLevelView.mp4')
+
+# Extract frames from the video using system ffmpeg call
+video_path <- "/Users/misc/epq/videos/Yinghan_Forehand.mp4"
+output_dir <- "/Users/misc/epq/videos/Yinghan_Forehand_frames"
+dir.create(output_dir, showWarnings = FALSE)
+
+# Extract frame every 0.5 seconds
+system(sprintf("ffmpeg -i %s -vf fps=5 %s/frame_%%03d.jpg", video_path, output_dir))
+
+# Extract frames from the video using system ffmpeg call
+video_path <- "/Users/misc/epq/videos/GrigorDimitrov_Forehand.mp4"
+output_dir <- "/Users/misc/epq/videos/GrigorDimitrov_Forehand_Forehand_frames"
+dir.create(output_dir, showWarnings = FALSE)
+
+# Extract frame every 0.5 seconds
+#system(sprintf("ffmpeg -i %s -vf fps=5 %s/frame_%%03d.jpg", video_path, output_dir))
+
+# Extract frames from the video using system ffmpeg call
+#video_path <- "/Users/misc/epq/videos/RogerFederer_Forehand.mp4"
+#output_dir <- "/Users/misc/epq/videos/RogerFederer_Forehand_frames"
+#dir.create(output_dir, showWarnings = FALSE)
+
+# Extract frame every 0.5 seconds
+#system(sprintf("ffmpeg -i %s -vf fps=5 %s/frame_%%03d.jpg", video_path, output_dir))
+
+```
+
+```{r load_python_enviroment}
+
+library(reticulate)
+use_virtualenv("~/r-mediapipe-env-310", required = TRUE)
+#py_run_string("import platform; print(platform.machine())")
+
+#py_config()
+os <- import("os")
+#os$listdir(".")
+
+```
+
+```{python load_patyhon_moduels}
+
+import os
+#import sys
+#print(sys.executable)
+import cv2
+#print("OpenCV version:", cv2.__version__)
+import mediapipe as mp
+import numpy as np
+
+```
+
+```{python annotate_images}
+
+# Set image path
+img_path = "/Users/misc/epq/frames/frame_016.jpg"  # change to your frame
+
+# Load image
+image = cv2.imread(img_path)
+image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+# Init MediaPipe pose detector
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(static_image_mode=True)
+
+# Run detection
+results = pose.process(image_rgb)
+landmarks = results.pose_landmarks.landmark if results.pose_landmarks else []
+
+## example
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(static_image_mode=True)
+mp_drawing = mp.solutions.drawing_utils
+
+```
+
+```{python step3_annotate_single_image}
+
+# Set image path
+input_img = "/Users/misc/epq/frames/frame_016.jpg"  # change to your frame
+output_img = "/Users/misc/epq/frames/frame_016_dpl.jpg"
+
+input_img = "/Users/misc/epq/videos/Yinghan_Forehand_frames/frame_009.jpg"
+output_img = "/Users/misc/epq/videos/Yinghan_Forehand_frames_pose_marked/pose_marked009.jpg"
+
+input_img = "/Users/misc/epq/videos/GrigorDimitrov_Forehand_frames/frame_052.jpg"
+output_img = "/Users/misc/epq/videos/GrigorDimitrov_Forehand_frames_pose_marked/frame_052.jpg"
+
+# Load image
+img = cv2.imread(input_img)
+img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+# Init MediaPipe pose detector
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(static_image_mode=True)
+
+# Run pose detection
+results = pose.process(img_rgb)
+
+# Draw pose landmarks on the image and save it
+if results.pose_landmarks:
+    mp_drawing.draw_landmarks(
+        img, results.pose_landmarks, mp_pose.POSE_CONNECTIONS
+    )
+    cv2.imwrite(output_img, img)
+  
+# 33 landmarks, each with: .x, .y, .z = normalized coordinates (0–1).visibility = how confident the model is (0–1)
+# Extract joint coordinates
+coords = [(lm.x, lm.y, lm.z, lm.visibility) for lm in landmarks]
+# right elbow
+lm = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_ELBOW]
+#print(lm.x, lm.y, lm.z, lm.visibility)
+
+```
+
+```{python annotate_image_dir}
+
+# Set input and output directories
+#input_dir = "/Users/misc/epq/videos/Yinghan_Forehand_frames"
+#output_dir = "/Users/misc/epq/videos/Yinghan_Forehand_frames_pose_marked"
+
+#input_dir = "/Users/misc/epq/videos/CarlosAlcaraz_Forehand_frames"
+#output_dir = "/Users/misc/epq/videos/CarlosAlcaraz_Forehand_frames_pose_marked"
+
+input_dir = "/Users/misc/epq/videos/RogerFederer_Forehand_frames"
+output_dir = "/Users/misc/epq/videos/RogerFederer_Forehand_frames_pose_marked"
+
+os.makedirs(output_dir, exist_ok=True)
+
+# Initialize MediaPipe Pose
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(static_image_mode=True)
+mp_drawing = mp.solutions.drawing_utils
+
+# Get all image files in the directory
+image_files = [f for f in os.listdir(input_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+
+for filename in sorted(image_files):
+    input_path = os.path.join(input_dir, filename)
+    output_path = os.path.join(output_dir, f"pose_{filename}")
+
+    # Load and process image
+    image = cv2.imread(input_path)
+    if image is None:
+        print(f"ould not read {input_path}")
+        continue
+
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = pose.process(image_rgb)
+
+    # Draw landmarks
+    if results.pose_landmarks:
+        mp_drawing.draw_landmarks(
+            image,
+            results.pose_landmarks,
+            mp_pose.POSE_CONNECTIONS
+        )
+        cv2.imwrite(output_path, image)
+        print(f"nnotated: {output_path}")
+    else:
+        print(f"⚠️ No pose detected in {filename}")
+
+```
+
+
+```{python compare_images}
+
+## load images to compare
+#input_img2 = "/Users/misc/epq/videos/Yinghan_Forehand_frames_pose_marked/pose_frame_007.jpg"
+#input_img1 = "/Users/misc/epq/videos/CarlosAlcaraz_Forehand_frames_pose_marked/pose_frame_018.jpg"
+#output_img = "/Users/misc/epq/videos/Yinghan_Forehand_frames_pose_marked/pose_frame_007_comparison.jpg"
+
+#img1 = "/Users/misc/epq/videos/Yinghan_Forehand_frames_pose_marked/pose_frame_007.jpg"
+#img2 = "/Users/misc/epq/videos/CarlosAlcaraz_Forehand_frames_pose_marked/pose_frame_018.jpg"
+#output_img = "/Users/misc/epq/videos/Yinghan_Forehand_frames_pose_marked/pose_frame_007_comparison.jpg"
+
+input_img1 = "/Users/misc/epq/videos/RogerFederer_Forehand_frames_pose_marked/pose_frame_016.jpg"
+input_img2 = "/Users/misc/epq/videos/RogerFederer_Forehand_frames_pose_marked/pose_frame_017.jpg"
+output_img = "/Users/misc/epq/videos/RogerFederer_Forehand_frames_pose_marked/pose_comparison.jpg"
+
+# Load both images
+img1 = cv2.imread(input_img1)
+img2 = cv2.imread(input_img2)
+img1_rgb = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
+img2_rgb = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
+
+# MediaPipe Pose
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(static_image_mode=True)
+mp_drawing = mp.solutions.drawing_utils
+
+# Detect poses
+res1 = pose.process(img1_rgb)
+res2 = pose.process(img2_rgb)
+
+# Helper: convert landmarks to pixel coordinates
+def get_landmark_coords(landmarks, image_shape):
+    h, w, _ = image_shape
+    return [(int(lm.x * w), int(lm.y * h)) if lm.visibility > 0.5 else None for lm in landmarks]
+
+# Only proceed if both poses are detected
+if res1.pose_landmarks and res2.pose_landmarks:
+    coords1 = get_landmark_coords(res1.pose_landmarks.landmark, img1.shape)
+    coords2 = get_landmark_coords(res2.pose_landmarks.landmark, img2.shape)
+
+    # Compare and draw on a copy of the second image
+    output = img2.copy()
+
+    for i, (p1, p2) in enumerate(zip(coords1, coords2)):
+        if p1 and p2:
+            # Distance between joints
+            dx = p2[0] - p1[0]
+            dy = p2[1] - p1[1]
+            dist = np.sqrt(dx**2 + dy**2)
+
+            # Color code: Green if close, Red if far
+            color = (0, 255, 0) if dist < 20 else (0, 0, 255)
+
+            # Draw joints and connection line
+            cv2.circle(output, p2, 5, color, -1)
+            cv2.line(output, p1, p2, color, 2)
+
+    # Save comparison output
+    cv2.imwrite(output_img, output)
+    print("Saved comparison-marked image:", output_path)
+
+else:
+    print("Pose not detected in one or both images.")
+
+```
+
+```{python superimpose}
+
+# Load and prepare images
+img1 = "/Users/misc/epq/videos/Yinghan_Forehand_frames_pose_marked/pose_frame_007.jpg"
+img2 = "/Users/misc/epq/videos/CarlosAlcaraz_Forehand_frames_pose_marked/pose_frame_018.jpg"
+
+img1 = cv2.imread(input_img1)
+img2 = cv2.imread(input_img2)
+
+# Convert to RGB for MediaPipe
+img1_rgb = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
+img2_rgb = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
+
+# Init MediaPipe Pose
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(static_image_mode=True)
+
+# Detect pose landmarks
+res1 = pose.process(img1_rgb)
+res2 = pose.process(img2_rgb)
+
+# Get image dimensions
+h, w = img1.shape[:2]
+
+# Function to extract specific landmarks
+def get_coords(landmarks, indices, shape):
+    h, w, _ = shape
+    return np.array([
+        [int(landmarks[i].x * w), int(landmarks[i].y * h)]
+        for i in indices
+        if landmarks[i].visibility > 0.5
+    ])
+
+# Landmark indices for alignment (e.g., shoulders and hip)
+landmark_ids = [11, 12, 24]  # Left shoulder, right shoulder, right hip
+
+if res1.pose_landmarks and res2.pose_landmarks:
+    lm1 = get_coords(res1.pose_landmarks.landmark, landmark_ids, img1.shape)
+    lm2 = get_coords(res2.pose_landmarks.landmark, landmark_ids, img2.shape)
+
+    if lm1.shape[0] == 3 and lm2.shape[0] == 3:
+        # Estimate affine transform to align img2 to img1
+        matrix = cv2.getAffineTransform(lm2.astype(np.float32), lm1.astype(np.float32))
+        
+        # Warp img2 to match img1's body position
+        img2_aligned = cv2.warpAffine(img2, matrix, (w, h))
+
+        # Blend aligned img2 with img1
+        superimposed = cv2.addWeighted(img1, 0.5, img2_aligned, 0.5, 0)
+
+        # Save or show result
+        cv2.imwrite(output_img, superimposed)
+        print("Saved aligned superimposed image:", output_img)
+    else:
+        print("Not enough visible landmarks in one of the images.")
+else:
+    print("Pose not detected in one or both images.")
+
+```
+
+```{python superimpose_compare}
+
+# Load and prepare images
+img1 = "/Users/misc/epq/videos/Yinghan_Forehand_frames_pose_marked/pose_frame_007.jpg"
+img2 = "/Users/misc/epq/videos/CarlosAlcaraz_Forehand_frames_pose_marked/pose_frame_018.jpg"
+output_img = "/Users/misc/epq/videos/Yinghan_Forehand_frames_pose_marked/pose_frame_007_comparison.jpg"
+
+# Load images
+img1 = cv2.imread(input_img1)
+img2 = cv2.imread(input_img2)
+
+# Convert to RGB for MediaPipe
+img1_rgb = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
+img2_rgb = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
+
+# Init MediaPipe Pose
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(static_image_mode=True)
+
+# Detect pose landmarks
+res1 = pose.process(img1_rgb)
+res2 = pose.process(img2_rgb)
+
+# Get dimensions
+h, w = img1.shape[:2]
+
+# Helper to extract landmark coordinates
+def get_coords(landmarks, shape):
+    h, w, _ = shape
+    return [(int(lm.x * w), int(lm.y * h)) if lm.visibility > 0.5 else None for lm in landmarks]
+
+# Landmarks used for alignment (left shoulder, right shoulder, right hip)
+landmark_ids = [11, 12, 24]
+
+# Check poses
+if res1.pose_landmarks and res2.pose_landmarks:
+    lm1 = np.array(get_coords(res1.pose_landmarks.landmark, img1.shape))[landmark_ids]
+    lm2 = np.array(get_coords(res2.pose_landmarks.landmark, img2.shape))[landmark_ids]
+
+    if None not in lm1 and None not in lm2:
+        # Convert to float for affine transform
+        matrix = cv2.getAffineTransform(lm2.astype(np.float32), lm1.astype(np.float32))
+        img2_aligned = cv2.warpAffine(img2, matrix, (w, h))
+
+        # Re-run pose detection on aligned image
+        img2_aligned_rgb = cv2.cvtColor(img2_aligned, cv2.COLOR_BGR2RGB)
+        res2_aligned = pose.process(img2_aligned_rgb)
+
+        # Superimpose images
+        superimposed = cv2.addWeighted(img1, 0.5, img2_aligned, 0.5, 0)
+
+        # Draw comparison on superimposed image
+        if res2_aligned.pose_landmarks:
+            coords1 = get_coords(res1.pose_landmarks.landmark, img1.shape)
+            coords2 = get_coords(res2_aligned.pose_landmarks.landmark, img2.shape)
+            output = superimposed.copy()
+
+            for p1, p2 in zip(coords1, coords2):
+                if p1 and p2:
+                    dx, dy = p2[0] - p1[0], p2[1] - p1[1]
+                    dist = np.sqrt(dx**2 + dy**2)
+                    color = (0, 255, 0) if dist < 20 else (0, 0, 255)
+                    cv2.circle(output, p1, 4, (255, 0, 0), -1)  # Pose from img1 (blue)
+                    cv2.circle(output, p2, 4, (0, 255, 255), -1)  # Pose from aligned img2 (yellow)
+                    cv2.line(output, p1, p2, color, 2)
+
+            # Save or display result
+            cv2.imwrite(output_img, output)
+            print("Saved aligned and pose-compared image:", output_img)
+        else:
+            print("Pose not detected in aligned image 2.")
+    else:
+        print("Not enough visible alignment landmarks.")
+else:
+    print("Pose not detected in one or both images.")
+
+```
+
+```{python example_1_comparet}
+
+#pro_path="/Users/misc/epq/videos/CarlosAlcaraz_Forehand_frames_pose_marked/pose_marked015.jpg"
+#student_path="/Users/misc/epq/videos/Yinghan_Forehand_frames_pose_marked/pose_marked007.jpg"
+
+# File paths
+pro_path = "/Users/misc/epq/videos/example/pose_marked017.jpg"
+student_path = "/Users/misc/epq/videos/example/pose_marked016.jpg"
+output_path = "/Users/misc/epq/videos/example/pose_comparison.jpg"
+
+#pro_path = "/Users/misc/epq/videos/RogerFederer_Forehand_frames_pose_marked/pose_frame_016.jpg"
+#student_path = "/Users/misc/epq/videos/RogerFederer_Forehand_frames_pose_marked/pose_frame_017.jpg"
+#output_path = "/Users/misc/epq/videos/RogerFederer_Forehand_frames_pose_marked/pose_comparison.jpg"
+
+# Load images
+pro_img = cv2.imread(pro_path)
+student_img = cv2.imread(student_path)
+pro_rgb = cv2.cvtColor(pro_img, cv2.COLOR_BGR2RGB)
+student_rgb = cv2.cvtColor(student_img, cv2.COLOR_BGR2RGB)
+
+# MediaPipe setup
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(static_image_mode=True)
+mp_drawing = mp.solutions.drawing_utils
+
+# Get landmarks
+res_pro = pose.process(pro_rgb)
+res_student = pose.process(student_rgb)
+
+# Function to extract pixel coordinates
+def get_coords(landmarks, shape):
+    h, w, _ = shape
+    return [(int(lm.x * w), int(lm.y * h)) if lm.visibility > 0.5 else None for lm in landmarks]
+
+if res_pro.pose_landmarks and res_student.pose_landmarks:
+    pro_pts = get_coords(res_pro.pose_landmarks.landmark, pro_img.shape)
+    student_pts = get_coords(res_student.pose_landmarks.landmark, student_img.shape)
+
+    # Overlay on student's image
+    output = student_img.copy()
+
+    for i, (p1, p2) in enumerate(zip(pro_pts, student_pts)):
+        if p1 and p2:
+            dist = np.linalg.norm(np.array(p1) - np.array(p2))
+            color = (0, 255, 0) if dist < 20 else (0, 0, 255)  # Green = good, Red = off
+            cv2.circle(output, p2, 5, color, -1)
+            cv2.line(output, p1, p2, color, 2)
+
+    # Save and show
+    cv2.imwrite(output_path, output)
+    print("Pose comparison saved to:", output_path)
+else:
+    print("Pose not detected in one or both images.")
+    
+```
+
+```{python example_1_compare_analysis_chatgpt}
+
+pro_path = "/Users/misc/epq/videos/RogerFederer_Forehand_frames_pose_marked/pose_frame_016.jpg"
+student_path = "/Users/misc/epq/videos/RogerFederer_Forehand_frames_pose_marked/pose_frame_017.jpg"
+output_path = "/Users/misc/epq/videos/RogerFederer_Forehand_frames_pose_marked/comparison_016_017.jpg"
+
+#pro_path = "/Users/misc/epq/videos/example/pose_marked017.jpg"
+#student_path = "/Users/misc/epq/videos/example/pose_marked016.jpg"
+#output_path = "/Users/misc/epq/videos/example/pose_comparison.jpg"
+
+# Load images
+pro_img = cv2.imread(pro_path)
+student_img = cv2.imread(student_path)
+pro_rgb = cv2.cvtColor(pro_img, cv2.COLOR_BGR2RGB)
+student_rgb = cv2.cvtColor(student_img, cv2.COLOR_BGR2RGB)
+
+# Init MediaPipe
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(static_image_mode=True)
+
+# Run pose detection
+res_pro = pose.process(pro_rgb)
+res_student = pose.process(student_rgb)
+
+# Get landmark pixel coordinates
+def get_coords(landmarks, shape):
+    h, w, _ = shape
+    return [(int(lm.x * w), int(lm.y * h)) if lm.visibility > 0.5 else None for lm in landmarks]
+
+# Joint angle helper
+def angle_between(a, b, c):
+    a, b, c = np.array(a), np.array(b), np.array(c)
+    ba = a - b
+    bc = c - b
+    cos_theta = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+    return np.degrees(np.arccos(np.clip(cos_theta, -1.0, 1.0)))
+
+if res_pro.pose_landmarks and res_student.pose_landmarks:
+    pro_pts = get_coords(res_pro.pose_landmarks.landmark, pro_img.shape)
+    student_pts = get_coords(res_student.pose_landmarks.landmark, student_img.shape)
+
+    # Indices
+    s = mp_pose.PoseLandmark.RIGHT_SHOULDER.value
+    e = mp_pose.PoseLandmark.RIGHT_ELBOW.value
+    w = mp_pose.PoseLandmark.RIGHT_WRIST.value
+
+    # Calculate elbow angle
+    angle_pro = angle_between(pro_pts[s], pro_pts[e], pro_pts[w])
+    angle_student = angle_between(student_pts[s], student_pts[e], student_pts[w])
+    angle_diff = angle_student - angle_pro
+
+    # Coordinate delta for wrist
+    wrist_diff_x = student_pts[w][0] - pro_pts[w][0]
+    wrist_diff_y = student_pts[w][1] - pro_pts[w][1]
+    wrist_dist = int(np.linalg.norm(np.array(student_pts[w]) - np.array(pro_pts[w])))
+
+    # Build GPT-friendly report
+    print("\n--- Pose Comparison Report (for GPT) ---\n")
+    print(f"Right elbow angle:")
+    print(f"  - Pro:     {angle_pro:.1f}°")
+    print(f"  - Student: {angle_student:.1f}°")
+    print(f"  - ➤ Difference: {angle_diff:+.1f}°\n")
+
+    print(f"Right wrist position difference (student vs pro):")
+    print(f"  - Δx: {wrist_diff_x:+d} pixels")
+    print(f"  - Δy: {wrist_diff_y:+d} pixels")
+    print(f"  - ➤ Total offset: {wrist_dist} pixels\n")
+
+    print("Ask GPT:")
+    print(f"Compared to Profressional, the student's right elbow is {angle_diff:+.1f}° {'more bent' if angle_diff < 0 else 'more extended'},")
+    print(f"and their right wrist is {wrist_dist} pixels off from the pro (Δx={wrist_diff_x:+}, Δy={wrist_diff_y:+}).")
+    print("What biomechanical corrections should they make to improve their forehand form?")
+else:
+    print("Pose not detected in one or both images.")
+
+```
+
+```{r chatgpt-query, results='asis'}
+
+library(httr)
+library(jsonlite)
+
+api_key <- Sys.getenv("OPENAI_API_KEY")  # Store your API key securely in .Renviron
+query <- "Summarise the BRCA1 gene function in cancer"
+
+response <- POST(
+  url = "https://api.openai.com/v1/chat/completions",
+  add_headers(
+    Authorization = paste("Bearer", api_key),
+    `Content-Type` = "application/json"
+  ),
+  body = toJSON(list(
+    model = "gpt-4",
+    messages = list(
+      list(role = "user", content = query)
+    ),
+    temperature = 0.7
+  ), auto_unbox = TRUE)
+)
+
+result <- fromJSON(content(response, as = "text", encoding = "UTF-8"))
+cat(result$choices[[1]]$message$content)
+
+file.exists("~/.Renviron")
+readLines("~/.Renviron")
+readRenviron("~/.Renviron")
+Sys.getenv("OPENAI_API_KEY")
+
+Sys.getenv("OPENAI_API_KEY")
+
+# Load required libraries
+library(httr)
+library(jsonlite)
+
+# Load API key from .Renviron
+api_key <- Sys.getenv("OPENAI_API_KEY")
+
+if (api_key == "") {
+  stop("No API key found. Please set OPENAI_API_KEY in your .Renviron file and restart R.")
+}
+
+```
+```{r }
+
+# Load required libraries
+library(httr)
+library(jsonlite)
+
+# Load API key from .Renviron
+api_key <- Sys.getenv("OPENAI_API_KEY")
+
+if (api_key == "") {
+  stop("No API key found. Please set OPENAI_API_KEY in your .Renviron file and restart R.")
+}
+```
+
+## Query ChatGPT (GPT-4)
+
+```{r chatgpt-query, results='asis'}
+# Define your question here
+query <- "Explain the role of BRCA1 in cancer"
+
+# Make the API call
+response <- POST(
+  url = "https://api.openai.com/v1/chat/completions",
+  add_headers(
+    Authorization = paste("Bearer", api_key),
+    `Content-Type` = "application/json"
+  ),
+  body = toJSON(list(
+    model = "gpt-4",
+    messages = list(
+      list(role = "user", content = query)
+    ),
+    temperature = 0.7
+  ), auto_unbox = TRUE)
+)
+
+# Parse and print the result
+result <- fromJSON(content(response, as = "text", encoding = "UTF-8"))
+
+# Output the answer nicely
+cat(result$choices[[1]]$message$content)
+
+```
+
+```{r }
+
+## filter video
+# Continue on the example above
+filter_render <- av_renderer('/Users/misc/epq/orange.mp4', vfilter = 'negate=1, fade=in:0:15:color=orange')
+df <- animate(p, renderer = filter_render, width = 720*q, height = 480*q, res = 72*q, fps = 25)
+av::av_media_info('/Users/misc/epq/RogerFedererForehandSlowMotionCourtLevelView.mp4')
+utils::browseURL('/Users/misc/epq/RogerFedererForehandSlowMotionCourtLevelView.mp4')
+
+fast_render <- av_renderer('/Users/misc/epq/RogerFedererForehandSlowMotionCourtLevelView.mp4', vfilter = "setpts=0.5*PTS")
+df <- animate(p, renderer = fast_render, fps = 25)
+av::av_media_info('/Users/misc/epq/RogerFedererForehandSlowMotionCourtLevelView.mp4')
+utils::browseURL('/Users/misc/epq/RogerFedererForehandSlowMotionCourtLevelView.mp4')
+
+## convert graphics into video
+## capture graphics
+library(gapminder)
+library(ggplot2)
+makeplot <- function(){
+  datalist <- split(gapminder, gapminder$year)
+  lapply(datalist, function(data){
+    p <- ggplot(data, aes(gdpPercap, lifeExp, size = pop, color = continent)) +
+      scale_size("population", limits = range(gapminder$pop)) + geom_point() + ylim(20, 90) +
+      scale_x_log10(limits = range(gapminder$gdpPercap)) + ggtitle(data$year) + theme_classic()
+    print(p)
+  })
+}
+
+# Play 1 plot per sec, and use an interpolation filter to convert into 10 fps
+video_file <- file.path('/Users/misc/epq/', 'output.mp4')
+av::av_capture_graphics(makeplot(), video_file, 1280, 720, res = 144, vfilter = 'framerate=fps=10')
+av::av_media_info(video_file)
+utils::browseURL(video_file)
+
+```
+
+```{r dude}
+
+#install.packages("remotes")
+
+# Install mocapr
+#remotes::install_github("jesse-smith/mocapr")
+
+#bvh <- read_bvh("/Users/misc/epq/data/example.bvh")
+#animate_bvh(bvh)
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+
+library(tidyverse)
+library(mocapr)
+#install.library("gifski")
+library("magick")
+
+```
+
+```{r, echo=FALSE}
+
+#Data
+mocapr_data %>% 
+  group_by(movement_nr, movement_description) %>% 
+  nest()
+
+```
+
+```{r, echo=FALSE}
+
+## Animating motion capture data
+jump_1 <- filter(mocapr::mocapr_data, movement_nr == 2)
+jump_2 <- filter(mocapr::mocapr_data, movement_nr == 3)
+gait <-  filter(mocapr::mocapr_data, movement_nr == 6)
+capoeira <- filter(mocapr::mocapr_data, movement_nr == 9)
+
+```
+
+## Jump1
+
+```{r, echo=FALSE}
+
+## Animating with animate_global()
+jump_1 %>% 
+  animate_global(
+    
+    # gganimate options passed via ...
+    nframes = nrow(.), 
+    fps = 50)
+
+```
+
+## Jump2
+
+```{r, echo=FALSE}
+
+jump_2 %>% 
+  animate_global(
+    
+    # gganimate options passed via ...
+    nframes = nrow(.), 
+    fps = 50)
+    
+```
+
+## Jump2 with out-of-plane movement
+
+
+```{r, echo=FALSE}
+
+jump_2 %>%
+  
+  # Project to the movements planes
+  project_full_body_to_MP() %>%
+  
+  # Animate the movement plane projections
+  animate_movement(
+    
+    # gganimate options passed via ...
+    nframes = nrow(.),
+    fps = 50, rewind = FALSE
+    )
+
+```
+
+
+the right side appears on the right side in the anatomical animation and on the left side in the movement animation, this is intentional but might change in future versions.
+
+```{r, echo=FALSE}
+
+jump_2 %>% 
+  #Project to the anatomical Planes 
+  project_full_body_to_AP() %>% 
+  
+  #Animate the anatomical projections
+  animate_anatomical(
+    #gganimate options passed via ...
+    nframes = nrow(.), 
+    fps = 50)
+
+```
+
+
+## Animate movement
+
+```{r, echo=FALSE}
+
+gait %>%
+  
+  # Project to the movements planes
+  project_full_body_to_MP() %>%
+  
+  # Animate the movement plane projections
+  animate_movement(
+    
+    # gganimate options passed via ...
+    nframes = nrow(.), 
+    fps = 50
+    )
+
+```
+
+## Animate anatomical
+
+```{r, echo=FALSE}
+
+gait %>%
+  
+  # Project to the anatomical Planes 
+  project_full_body_to_AP() %>%
+  
+  # Animate the anatomical projections
+  animate_anatomical(
+    
+    # gganimate options passed via ...
+    nframes = nrow(.),
+    fps = 50
+    )
+
+```
+
+## Adjust the speed of animation
+
+```{r, echo=FALSE}
+
+capoeira %>% 
+  filter(frame > 48 & frame < 223) %>% 
+  project_full_body_to_MP() %>% 
+  animate_movement(
+    
+    #gganimate options passed via ...
+    nframes = nrow(.)*2, 
+    fps = 50)
+    
+```
+## To plot
+
+```{r, echo=FALSE}
+
+jump_2 %>%
+  
+  # Project to the anatomical Planes
+  project_full_body_to_AP() %>% 
+  
+  # Reduce the number of frames in the data
+  filter(frame %in% c(100, 120, 140, 150, 170, 180)) %>% 
+  
+  # Animate the anatomical projections
+  animate_anatomical(planes = c("F"),
+                     use_geom_point = FALSE, 
+                     planes_in_rows_or_cols = c("cols"), 
+                     col_facets = frame,
+                     return_plot = TRUE)
+```
+
+## Animating and plotting multiple movements
+
+```{r, echo=FALSE}
+
+mocapr_data %>% 
+  
+  # Take two jumps
+  filter(movement_nr %in% c(1,3)) %>% 
+  group_by(movement_nr) %>% 
+  
+  # Add jump phases and events
+  group_modify(~add_phases_jump(.x)) %>% 
+  group_modify(~project_full_body_to_AP(.x)) %>%
+  
+  # Keep only single frame events and highest position in jump
+  filter(
+    phase_b %in% c(2, 4, 6, 8, 10)) %>% 
+  
+  animate_anatomical(
+    planes = "F",             # Show only the forward plane, change to "R for the forward plane. Remove for both planes
+    row_facets = movement_nr, # Facet the two movements in two rows
+    col_facets = phase_b,       # Facet the phases in columns
+    return_plot = TRUE,       # Return a plot
+
+    # Just styling options
+    use_geom_point = FALSE,
+    line_colored_size = 1.2,
+    line_black_size = 1,
+    line_black_alpha = 1)
+```
