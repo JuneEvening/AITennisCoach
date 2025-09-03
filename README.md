@@ -3,7 +3,7 @@ An EPQ web app that uses computer vision and AI to analyse tennis strokes by com
 
 # Working Steps 
 1. Users upload videos of a pro and a student player.
-2. 2. The app extracts frames from the videos.
+2. The app extracts frames from the videos.
 3. MediaPipe analyses each frame to annotate body landmarks of 33 joints.
 4. The app calculates differences in relative joint angles between the pro and student.
 5. These differences are sent to OpenAI to generate personalised coaching advice.
