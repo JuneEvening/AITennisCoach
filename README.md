@@ -1,5 +1,5 @@
 # AI Tennis Coach
-An EPQ web app that uses computer vision and AI to analyse tennis strokes by comparing a student's pose to a professional.
+An AI-Powered Framework for Objective Tennis Performance Analysis.
 
 # Working Steps 
 1. Users upload videos of a pro and a student player.
