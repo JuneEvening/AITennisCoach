@@ -1,2 +1,35 @@
-# AITennisCoach
-An AI-Powered Framework for Objective Tennis Performance Analysis
+# AI Tennis Coach
+An EPQ web app that uses computer vision and AI to analyse tennis strokes by comparing a student's pose to a professional.
+
+# Working Steps 
+Step 1. Users upload videos of a pro and a student player.
+Step 2. The app extracts frames from the videos.
+Step 3. MediaPipe analyses each frame to annotate body landmarks of 33 joints.
+Step 4. The app calculates differences in relative joint angles between the pro and student.
+Step 5. These differences are sent to OpenAI to generate personalised coaching advice.
+Step 6. The coaching advice and any queries typed in, are shown in the web app.
+
+# Setup:
+
+1. Isntall R, RStudio, and Python enviroment.
+2. Get an OpenAI API key from platform.openai.com/api-keys.
+3. Install Python packages: Open terminal and run:
+   pip install opencv-python mediapipe openai
+4. Install R packages: In RStudio, run:
+   install.packages(c("shiny", "reticulate"))
+5. Set your API key: In R, run:
+   Sys.setenv(OPENAI_API_KEY = 'your-key-here')
+
+# How to Run:
+Open app.R in RStudio and click "Run App".
+
+# How to Use:
+Step 1. Open the app in your browser.
+Step 2. Upload a pro video (e.g., from YouTube), click "Extract Frames", then "Annotate Frames". Pick a good frame.
+Step 3. Do the same with a student video.
+Step 4. Click "Compare Poses" to see the analysis.
+Step 5. Click "Get Tennis Coach Advice" for AI feedback.
+
+
+
+
